@@ -32,6 +32,20 @@ jobs:
           ls -la /usr/local/lib/android/sdk || true
           find /usr/local/lib/android/sdk -maxdepth 3 -type f \( -name sdkmanager -o -name adb \) 2>/dev/null || true
 
+      - name: Install Android platform packages
+        shell: bash
+        run: |
+          set -euo pipefail
+          SDK_ROOT="${ANDROID_HOME:-/usr/local/lib/android/sdk}"
+          SDKMANAGER="$(find "$SDK_ROOT" -type f -name sdkmanager 2>/dev/null | head -n 1 || true)"
+          if [[ -z "$SDKMANAGER" ]]; then
+            echo "sdkmanager not found"
+            exit 1
+          fi
+          echo "Using sdkmanager: $SDKMANAGER"
+          yes | sudo "$SDKMANAGER" --sdk_root="$SDK_ROOT" --licenses > /dev/null
+          sudo "$SDKMANAGER" --sdk_root="$SDK_ROOT" --install "platforms;android-34" "build-tools;34.0.0" "platform-tools"
+
       - name: Install Gradle
         shell: bash
         run: |
