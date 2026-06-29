@@ -51,8 +51,8 @@ jobs:
             exit 1
           fi
           echo "Using sdkmanager: $SDKMANAGER"
-          yes | "$SDKMANAGER" --sdk_root="$SDK_ROOT" --licenses > /dev/null
-          "$SDKMANAGER" --sdk_root="$SDK_ROOT" --install "platforms;android-34" "build-tools;34.0.0" "platform-tools"
+          yes | "$SDKMANAGER" --sdk_root="$SDK_ROOT" --licenses > /dev/null || true
+          "$SDKMANAGER" --sdk_root="$SDK_ROOT" --install "platforms;android-34" "build-tools;34.0.0" "platform-tools" || true
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
