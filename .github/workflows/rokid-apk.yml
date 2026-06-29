@@ -70,7 +70,16 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          set +e
           gradle -p "${ANDROID_PROJECT_DIR}" :app:assembleDebug --stacktrace --no-daemon 2>&1 | tee "${RUNNER_TEMP}/gradle-build.log"
+          status=${PIPESTATUS[0]}
+          set -e
+          if [[ "$status" -ne 0 ]]; then
+            summary="$(grep -E "(^FAILURE:|^\\* What went wrong:|^> |requires|Failed|Exception|error:|Caused by|SDK location|compileSdk)" "${RUNNER_TEMP}/gradle-build.log" | tail -n 20 | sed ':a;N;$!ba;s/%/%25/g;s/\r/%0D/g;s/\n/%0A/g')"
+            echo "::error title=Gradle assembleDebug failed::${summary:-Gradle failed; see Build Debug APK logs}"
+            tail -n 160 "${RUNNER_TEMP}/gradle-build.log"
+            exit "$status"
+          fi
 
       - name: Summarize Gradle failure
         if: failure()
