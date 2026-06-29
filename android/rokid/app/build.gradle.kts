@@ -20,7 +20,7 @@ android {
         signingConfigs {
             create("release") {
                 val p = releaseKeystorePath!!
-                val f = java.io.File(p)
+                val f = File(p)
                 storeFile = if (f.isAbsolute) file(f) else rootProject.file(p)
                 storePassword = releaseKeystorePassword
                 keyAlias = releaseKeyAlias
