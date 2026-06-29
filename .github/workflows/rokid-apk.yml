@@ -11,6 +11,8 @@ jobs:
     runs-on: ubuntu-latest
     env:
       ANDROID_PROJECT_DIR: android/rokid
+      ANDROID_HOME: /usr/local/lib/android/sdk
+      ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
       ROKID_KEYSTORE_BASE64: ${{ secrets.ROKID_KEYSTORE_BASE64 }}
       ROKID_KEYSTORE_PASSWORD: ${{ secrets.ROKID_KEYSTORE_PASSWORD }}
       ROKID_KEY_ALIAS: ${{ secrets.ROKID_KEY_ALIAS }}
@@ -22,6 +24,9 @@ jobs:
         with:
           distribution: temurin
           java-version: "17"
+
+      - name: Setup Android SDK tools
+        uses: android-actions/setup-android@v3
 
       - name: Check Android environment
         shell: bash
@@ -36,15 +41,18 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          SDK_ROOT="${ANDROID_HOME:-/usr/local/lib/android/sdk}"
-          SDKMANAGER="$(find "$SDK_ROOT" -type f -name sdkmanager 2>/dev/null | head -n 1 || true)"
+          SDK_ROOT="${ANDROID_SDK_ROOT:-${ANDROID_HOME:-/usr/local/lib/android/sdk}}"
+          SDKMANAGER="$(command -v sdkmanager || true)"
+          if [[ -z "$SDKMANAGER" ]]; then
+            SDKMANAGER="$(find "$SDK_ROOT" -type f -name sdkmanager 2>/dev/null | head -n 1 || true)"
+          fi
           if [[ -z "$SDKMANAGER" ]]; then
             echo "sdkmanager not found"
             exit 1
           fi
           echo "Using sdkmanager: $SDKMANAGER"
-          yes | sudo "$SDKMANAGER" --sdk_root="$SDK_ROOT" --licenses > /dev/null
-          sudo "$SDKMANAGER" --sdk_root="$SDK_ROOT" --install "platforms;android-34" "build-tools;34.0.0" "platform-tools"
+          yes | "$SDKMANAGER" --sdk_root="$SDK_ROOT" --licenses > /dev/null
+          "$SDKMANAGER" --sdk_root="$SDK_ROOT" --install "platforms;android-34" "build-tools;34.0.0" "platform-tools"
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
