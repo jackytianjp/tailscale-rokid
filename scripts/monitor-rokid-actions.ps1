@@ -1,10 +1,18 @@
 param(
     [string]$ActionsUrl = "https://github.com/jackytianjp/tailscale-rokid/actions",
     [int]$IntervalSeconds = 60,
-    [string]$LogFile = "C:\Users\takano\OneDrive - Aderans Company Limited\httpsgithub.comtailscaletailscale\tailscale-rokid\monitor-actions.log"
+    [string]$LogFile = "$env:TEMP\\tailscale-rokid-monitor-actions.log"
 )
 
 $ErrorActionPreference = "Continue"
+
+$logDir = Split-Path -Parent $LogFile
+if (-not [string]::IsNullOrWhiteSpace($logDir) -and -not (Test-Path $logDir)) {
+    New-Item -ItemType Directory -Path $logDir -Force | Out-Null
+}
+if (-not (Test-Path $LogFile)) {
+    New-Item -ItemType File -Path $LogFile -Force | Out-Null
+}
 
 function Get-SummaryLine {
     param([string]$Html)

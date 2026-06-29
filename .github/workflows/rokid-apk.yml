@@ -46,16 +46,10 @@ jobs:
           yes | sudo "$SDKMANAGER" --sdk_root="$SDK_ROOT" --licenses > /dev/null
           sudo "$SDKMANAGER" --sdk_root="$SDK_ROOT" --install "platforms;android-34" "build-tools;34.0.0" "platform-tools"
 
-      - name: Install Gradle
-        shell: bash
-        run: |
-          set -euo pipefail
-          GRADLE_VERSION=8.10.2
-          curl -fsSL -o gradle.zip "https://services.gradle.org/distributions/gradle-${GRADLE_VERSION}-bin.zip"
-          unzip -q gradle.zip
-          export PATH="${PWD}/gradle-${GRADLE_VERSION}/bin:${PATH}"
-          echo "${PWD}/gradle-${GRADLE_VERSION}/bin" >> "$GITHUB_PATH"
-          gradle --version
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: 8.10.2
 
       - name: Build Debug APK
         shell: bash
