@@ -11,6 +11,8 @@ jobs:
     runs-on: ubuntu-latest
     env:
       ANDROID_PROJECT_DIR: android/rokid
+      ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
+      ANDROID_HOME: /usr/local/lib/android/sdk
       ROKID_KEYSTORE_BASE64: ${{ secrets.ROKID_KEYSTORE_BASE64 }}
       ROKID_KEYSTORE_PASSWORD: ${{ secrets.ROKID_KEYSTORE_PASSWORD }}
       ROKID_KEY_ALIAS: ${{ secrets.ROKID_KEY_ALIAS }}
@@ -23,36 +25,25 @@ jobs:
           distribution: temurin
           java-version: "17"
 
-      - uses: android-actions/setup-android@v3
-
       - name: Install Android SDK packages
         shell: bash
         run: |
           set -euo pipefail
           sudo apt-get update -y
           sudo apt-get install -y unzip curl
+          sudo mkdir -p "${ANDROID_SDK_ROOT}/cmdline-tools"
+          cd /tmp
+          curl -fsSL -o cmdline-tools.zip "https://dl.google.com/android/repository/commandlinetools-linux-13114758_latest.zip"
+          sudo rm -rf "${ANDROID_SDK_ROOT}/cmdline-tools/latest"
+          sudo mkdir -p "${ANDROID_SDK_ROOT}/cmdline-tools/latest"
+          sudo unzip -q cmdline-tools.zip -d "${ANDROID_SDK_ROOT}/cmdline-tools/latest"
 
-          SDK_ROOT="${ANDROID_SDK_ROOT:-${ANDROID_HOME:-}}"
-          if [[ -z "${SDK_ROOT}" ]]; then
-            echo "ANDROID_SDK_ROOT/ANDROID_HOME is not set"
-            exit 1
-          fi
+          echo "${ANDROID_SDK_ROOT}/cmdline-tools/latest/cmdline-tools/bin" >> "$GITHUB_PATH"
+          echo "${ANDROID_SDK_ROOT}/platform-tools" >> "$GITHUB_PATH"
+          export PATH="${ANDROID_SDK_ROOT}/cmdline-tools/latest/cmdline-tools/bin:${ANDROID_SDK_ROOT}/platform-tools:${PATH}"
 
-          echo "ANDROID SDK root: ${SDK_ROOT}"
-          ls -la "${SDK_ROOT}" || true
-
-          SDKMANAGER="${SDK_ROOT}/cmdline-tools/latest/bin/sdkmanager"
-          if [[ ! -x "${SDKMANAGER}" ]]; then
-            SDKMANAGER="$(find "${SDK_ROOT}" -type f -name sdkmanager 2>/dev/null | head -n 1 || true)"
-          fi
-          if [[ -z "${SDKMANAGER}" || ! -x "${SDKMANAGER}" ]]; then
-            echo "sdkmanager not found under ${SDK_ROOT}"
-            find "${SDK_ROOT}" -maxdepth 4 -type d -print || true
-            exit 1
-          fi
-
-          yes | "${SDKMANAGER}" --licenses > /dev/null
-          "${SDKMANAGER}" --install "platforms;android-34" "build-tools;34.0.0" "platform-tools"
+          yes | sdkmanager --sdk_root="${ANDROID_SDK_ROOT}" --licenses > /dev/null
+          sdkmanager --sdk_root="${ANDROID_SDK_ROOT}" --install "platforms;android-34" "build-tools;34.0.0" "platform-tools"
 
       - name: Install Gradle
         shell: bash
