@@ -29,8 +29,30 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          sdkmanager --install "platforms;android-34" "build-tools;34.0.0" "platform-tools"
-          yes | sdkmanager --licenses > /dev/null
+          sudo apt-get update -y
+          sudo apt-get install -y unzip curl
+
+          SDK_ROOT="${ANDROID_SDK_ROOT:-${ANDROID_HOME:-}}"
+          if [[ -z "${SDK_ROOT}" ]]; then
+            echo "ANDROID_SDK_ROOT/ANDROID_HOME is not set"
+            exit 1
+          fi
+
+          echo "ANDROID SDK root: ${SDK_ROOT}"
+          ls -la "${SDK_ROOT}" || true
+
+          SDKMANAGER="${SDK_ROOT}/cmdline-tools/latest/bin/sdkmanager"
+          if [[ ! -x "${SDKMANAGER}" ]]; then
+            SDKMANAGER="$(find "${SDK_ROOT}" -type f -name sdkmanager 2>/dev/null | head -n 1 || true)"
+          fi
+          if [[ -z "${SDKMANAGER}" || ! -x "${SDKMANAGER}" ]]; then
+            echo "sdkmanager not found under ${SDK_ROOT}"
+            find "${SDK_ROOT}" -maxdepth 4 -type d -print || true
+            exit 1
+          fi
+
+          yes | "${SDKMANAGER}" --licenses > /dev/null
+          "${SDKMANAGER}" --install "platforms;android-34" "build-tools;34.0.0" "platform-tools"
 
       - name: Install Gradle
         shell: bash
