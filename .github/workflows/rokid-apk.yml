@@ -2,6 +2,9 @@ name: rokid-apk
 
 on:
   workflow_dispatch: {}
+  push:
+    branches:
+      - main
 
 jobs:
   build:
