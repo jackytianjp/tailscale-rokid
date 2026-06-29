@@ -52,7 +52,7 @@ jobs:
           fi
           echo "Using sdkmanager: $SDKMANAGER"
           yes | "$SDKMANAGER" --sdk_root="$SDK_ROOT" --licenses > /dev/null || true
-          "$SDKMANAGER" --sdk_root="$SDK_ROOT" --install "platforms;android-34" "build-tools;34.0.0" "platform-tools" || true
+          "$SDKMANAGER" --sdk_root="$SDK_ROOT" --install "platforms;android-35" "build-tools;35.0.0" "platform-tools" || true
 
       - name: Write local.properties
         shell: bash
@@ -70,7 +70,20 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          gradle -p "${ANDROID_PROJECT_DIR}" :app:assembleDebug --stacktrace --info --no-daemon
+          gradle -p "${ANDROID_PROJECT_DIR}" :app:assembleDebug --stacktrace --no-daemon 2>&1 | tee "${RUNNER_TEMP}/gradle-build.log"
+
+      - name: Summarize Gradle failure
+        if: failure()
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -f "${RUNNER_TEMP}/gradle-build.log" ]]; then
+            echo "### Gradle failure summary" >> "$GITHUB_STEP_SUMMARY"
+            echo '```' >> "$GITHUB_STEP_SUMMARY"
+            grep -E "(^FAILURE:|^\* What went wrong:|^> |requires|Failed|Exception|error:|Caused by)" "${RUNNER_TEMP}/gradle-build.log" | tail -n 120 >> "$GITHUB_STEP_SUMMARY" || true
+            echo '```' >> "$GITHUB_STEP_SUMMARY"
+            tail -n 160 "${RUNNER_TEMP}/gradle-build.log"
+          fi
 
       - name: Upload Debug APK
         uses: actions/upload-artifact@v4

@@ -5,7 +5,7 @@ plugins {
 
 android {
     namespace = "com.tailscale.rokid"
-    compileSdk = 34
+    compileSdk = 35
 
     val releaseKeystorePath = System.getenv("ROKID_KEYSTORE_PATH")
     val releaseKeystorePassword = System.getenv("ROKID_KEYSTORE_PASSWORD")
