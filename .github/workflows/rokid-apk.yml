@@ -53,6 +53,7 @@ jobs:
           GRADLE_VERSION=8.10.2
           curl -fsSL -o gradle.zip "https://services.gradle.org/distributions/gradle-${GRADLE_VERSION}-bin.zip"
           unzip -q gradle.zip
+          export PATH="${PWD}/gradle-${GRADLE_VERSION}/bin:${PATH}"
           echo "${PWD}/gradle-${GRADLE_VERSION}/bin" >> "$GITHUB_PATH"
           gradle --version
 
