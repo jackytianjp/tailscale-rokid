@@ -1,0 +1,74 @@
+name: rokid-apk
+
+on:
+  workflow_dispatch: {}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      ANDROID_PROJECT_DIR: android/rokid
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: android-actions/setup-android@v3
+
+      - name: Install Android SDK packages
+        shell: bash
+        run: |
+          set -euo pipefail
+          sdkmanager --install "platforms;android-34" "build-tools;34.0.0" "platform-tools"
+
+      - name: Install Gradle
+        shell: bash
+        run: |
+          set -euo pipefail
+          GRADLE_VERSION=8.10.2
+          curl -fsSL -o gradle.zip "https://services.gradle.org/distributions/gradle-${GRADLE_VERSION}-bin.zip"
+          unzip -q gradle.zip
+          echo "${PWD}/gradle-${GRADLE_VERSION}/bin" >> "$GITHUB_PATH"
+          gradle --version
+
+      - name: Build Debug APK
+        shell: bash
+        run: |
+          set -euo pipefail
+          gradle -p "${ANDROID_PROJECT_DIR}" :app:assembleDebug
+
+      - name: Upload Debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-debug
+          path: android/rokid/app/build/outputs/apk/debug/app-debug.apk
+
+      - name: Prepare Release Keystore
+        if: ${{ secrets.ROKID_KEYSTORE_BASE64 != '' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "${ANDROID_PROJECT_DIR}/.keystore"
+          echo "${{ secrets.ROKID_KEYSTORE_BASE64 }}" | base64 -d > "${ANDROID_PROJECT_DIR}/.keystore/release.jks"
+
+      - name: Build Signed Release APK
+        if: ${{ secrets.ROKID_KEYSTORE_BASE64 != '' }}
+        shell: bash
+        env:
+          ROKID_KEYSTORE_PATH: .keystore/release.jks
+          ROKID_KEYSTORE_PASSWORD: ${{ secrets.ROKID_KEYSTORE_PASSWORD }}
+          ROKID_KEY_ALIAS: ${{ secrets.ROKID_KEY_ALIAS }}
+          ROKID_KEY_PASSWORD: ${{ secrets.ROKID_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          gradle -p "${ANDROID_PROJECT_DIR}" :app:assembleRelease
+
+      - name: Upload Release APK
+        if: ${{ secrets.ROKID_KEYSTORE_BASE64 != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-release
+          path: android/rokid/app/build/outputs/apk/release/app-release.apk

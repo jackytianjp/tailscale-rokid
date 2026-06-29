@@ -1,0 +1,11 @@
+{
+  "heartbeatIntervalActiveSeconds": 20,
+  "heartbeatIntervalSleepSeconds": 120,
+  "cpuTargetPercent": 5,
+  "memoryTargetMb": 100,
+  "weakNetwork": {
+    "latencyMs": 100,
+    "packetLossPercent": 10,
+    "derpBias": "prefer_stable"
+  }
+}

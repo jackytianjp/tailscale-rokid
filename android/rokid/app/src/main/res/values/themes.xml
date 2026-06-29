@@ -1,0 +1,9 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <style name="Theme.TailscaleRokid" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/rokid_primary</item>
+        <item name="colorPrimaryVariant">@color/rokid_primary_dark</item>
+        <item name="colorSecondary">@color/rokid_accent</item>
+        <item name="android:statusBarColor" tools:targetApi="l">@color/rokid_primary_dark</item>
+        <item name="android:navigationBarColor">@color/rokid_surface</item>
+    </style>
+</resources>
